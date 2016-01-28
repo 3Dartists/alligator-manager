@@ -1,0 +1,145 @@
+#!/bin/bash
+#
+# Alligator Raspberrypi GPIO utility
+# Marco Antonini 2015
+#
+# GPIO Used
+#
+# Uart
+# GPIO14
+# GPIO15
+#
+# AUX shared GPIO
+# GPIO-GEN0 "GPIO-17" -> ERASE
+# GPIO-GEN1 "GPIO-18" -> Aux1 (user defined not used)
+# GPIO-GEN2 "GPIO-27" -> Aux2 (user defined not used)
+# GPIO-GEN3 "GPIO-22" -> RESET
+# GPIO-GEN4 "GPIO-23" -> Aux3 (user defined not used)
+# GPIO-GEN5 "GPIO-24" -> Aux4 (user defined not used)
+# GPIO-GEN6 "GPIO-25" -> Aux5 (user defined not used)
+#
+# Programming/Reset control
+# GPIO-GEN3 "gpio22" -> Alligator Reset (out, active low)
+# GPIO-GEN0 "gpio17" -> Alligator Erase (out, active low)
+
+BOSSA_CLI="/usr/local/Repetier-Server/modules/firmware/bin/bossac"
+GPIO_PATH="/sys/class/gpio"
+
+GPIO_RESET="$GPIO_PATH/gpio22"
+GPIO_ERASE="$GPIO_PATH/gpio17"
+GPIO_AUX1="$GPIO_PATH/gpio18"
+GPIO_AUX2="$GPIO_PATH/gpio27"
+GPIO_AUX3="$GPIO_PATH/gpio23"
+GPIO_AUX4="$GPIO_PATH/gpio24"
+GPIO_AUX5="$GPIO_PATH/gpio25"
+
+VERSION="0.2"
+
+# $1 GPIO number
+function GpioExport {
+    if [ ! -d "$GPIO_PATH/gpio$1" ]
+    then
+        echo $1 > $GPIO_PATH/export
+    fi
+}
+
+# $1 GPIO_VAR $2 value [high,low,in,out]
+function GpioDir {
+    if [ -d $1 ]
+    then
+        echo $2 > $1/direction
+    fi
+}
+
+function GpioWrite {
+    if [ -d $1 ]
+    then
+        echo $2 > $1/value
+    fi
+}
+
+function kmsg {
+	echo "$1" > /dev/kmsg
+}
+
+function eraseFW {
+        kmsg "ERASE Alligator Firmware"
+        GpioWrite $GPIO_RESET "0"
+        GpioWrite $GPIO_ERASE "0"
+        GpioWrite $GPIO_RESET "1"
+        sleep 0.5
+        GpioWrite $GPIO_ERASE "1"
+        GpioWrite $GPIO_RESET "0"
+        sleep 0.5
+        GpioWrite $GPIO_RESET "1"
+}
+
+function helpMsg {
+	echo "Alligator manager utility v." $VERSION
+	echo "usage: alligator-manager [ option ]"
+	echo -e "\t-h | --help"
+	echo -e "\t--init | start"
+	echo -e "\t--reset | --emergency-stop"
+	echo -e "\t--permanent-reset | --shutdown"
+	echo -e "\t--erase"
+	echo -e "\t--fw-upload 'fw_name.bin'"
+	echo -e "\t--heater-wait-skip [--skip|--restore]"
+}
+
+
+if [ $# -eq 1 ];
+then
+	if [ $1 = 'start' ] || [ $1 = "--init" ]
+	then
+
+		GpioExport 27
+		GpioDir $GPIO_HEAT_INT "out"
+		
+		GpioExport 22
+		GpioDir $GPIO_RESET "high"
+
+		GpioExport 17
+		GpioDir $GPIO_ERASE "high"
+
+	elif [ $1 = "--reset" ] || [ $1 = '--emergency-stop' ]
+	then
+
+		GpioWrite $GPIO_RESET "0"
+		sleep 0.2
+		GpioWrite $GPIO_RESET "1"
+
+	elif [ $1 = "--permanent-reset" ] || [ $1 = "--shutdown" ]
+	then
+
+        GpioWrite $GPIO_RESET "0"
+
+
+	elif [ $1 = "--erase" ]
+	then
+		eraseFW
+	else
+		helpMsg
+	fi
+
+elif [ $# -eq 2 ];
+then
+	if [ $1 = "--fw-upload" ]
+	then
+        if [ -d $2 ]
+        then
+            eraseFW
+            sudo -i stty -F /dev/ttyAMA0 ispeed 115200 ospeed 115200
+            $BOSSA_CLI -e -w -v -b -R -i -p ttyAMA0 $2
+        else
+            echo "$2 not found!"
+        fi
+
+	else
+		helpMsg
+	fi
+
+else
+	helpMsg
+fi
+
+exit 0
