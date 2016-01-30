@@ -133,6 +133,7 @@ then
         if [ -d $2 ]
         then
             eraseFW
+            sleep 1
             sudo -i stty -F /dev/ttyAMA0 ispeed 115200 ospeed 115200
             $BOSSA_CLI -e -w -v -b -R -i -p ttyAMA0 $2
         else
