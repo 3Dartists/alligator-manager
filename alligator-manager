@@ -22,7 +22,13 @@
 # GPIO-GEN3 "gpio22" -> Alligator Reset (out, active low)
 # GPIO-GEN0 "gpio17" -> Alligator Erase (out, active low)
 
+# RepetierServer include bossa-cli
 BOSSA_CLI="/usr/local/Repetier-Server/modules/firmware/bin/bossac"
+if [ ! -d $BOSSA_CLI ]
+then
+        BOSSA_CLI="/usr/bin/bossac"
+fi
+
 GPIO_PATH="/sys/class/gpio"
 
 GPIO_RESET="$GPIO_PATH/gpio22"
@@ -83,7 +89,6 @@ function helpMsg {
 	echo -e "\t--permanent-reset | --shutdown"
 	echo -e "\t--erase"
 	echo -e "\t--fw-upload 'fw_name.bin'"
-	echo -e "\t--heater-wait-skip [--skip|--restore]"
 }
 
 
