@@ -36,7 +36,7 @@
 
 # RepetierServer include bossa-cli
 BOSSA_CLI="/usr/local/Repetier-Server/modules/firmware/bin/bossac"
-if [ ! -d $BOSSA_CLI ]
+if [ ! -f $BOSSA_CLI ]
 then
         BOSSA_CLI="/usr/bin/bossac"
 fi
@@ -142,7 +142,7 @@ elif [ $# -eq 2 ];
 then
 	if [ $1 = "--fw-upload" ]
 	then
-        if [ -d $2 ]
+        if [ -f $2 ]
         then
             eraseFW
             sleep 1
