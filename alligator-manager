@@ -92,6 +92,19 @@ function eraseFW {
         GpioWrite $GPIO_RESET "1"
 }
 
+function klipperFWflash {
+        kmsg "ERASE Alligator Firmware"
+        GpioWrite $GPIO_RESET "0"
+        GpioWrite $GPIO_ERASE "0"
+        GpioWrite $GPIO_RESET "1"
+        sleep 0.5
+        GpioWrite $GPIO_ERASE "1"
+        GpioWrite $GPIO_RESET "0"
+        sleep 0.5
+        GpioWrite $GPIO_RESET "1"
+	kmsg "FLASHING Klipper Firmware"
+}
+
 function helpMsg {
 	echo "Alligator manager utility v." $VERSION
 	echo "usage: alligator-manager [ option ]"
@@ -101,6 +114,7 @@ function helpMsg {
 	echo -e "\t--permanent-reset | --shutdown"
 	echo -e "\t--erase"
 	echo -e "\t--fw-upload 'fw_name.bin'"
+	echo -e "\t--klipper-fw-flash"
 }
 
 
@@ -152,6 +166,18 @@ then
             echo "$2 not found!"
         fi
 
+	else
+		helpMsg
+	fi
+	
+elif [ $# -eq 1 ];
+then
+	if [ $1 = "--klipper-fw-flash" ]
+        then
+            eraseFW
+            sleep 1
+            sudo -i stty -F /dev/ttyAMA0 ispeed 115200 ospeed 115200
+            $BOSSA_CLI -e -w -v -b -R -i -p ttyAMA0 /klipper/out/klipper.bin
 	else
 		helpMsg
 	fi
