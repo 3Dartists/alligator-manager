@@ -92,19 +92,6 @@ function eraseFW {
         GpioWrite $GPIO_RESET "1"
 }
 
-function klipperFWflash {
-        kmsg "ERASE Alligator Firmware"
-        GpioWrite $GPIO_RESET "0"
-        GpioWrite $GPIO_ERASE "0"
-        GpioWrite $GPIO_RESET "1"
-        sleep 0.5
-        GpioWrite $GPIO_ERASE "1"
-        GpioWrite $GPIO_RESET "0"
-        sleep 0.5
-        GpioWrite $GPIO_RESET "1"
-	kmsg "FLASHING Klipper Firmware"
-}
-
 function helpMsg {
 	echo "Alligator manager utility v." $VERSION
 	echo "usage: alligator-manager [ option ]"
