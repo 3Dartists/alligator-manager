@@ -101,6 +101,7 @@ function helpMsg {
 	echo -e "\t--permanent-reset | --shutdown"
 	echo -e "\t--erase"
 	echo -e "\t--fw-upload 'fw_name.bin'"
+	echo -e "\t--klipper-fw-flash"
 }
 
 
@@ -152,6 +153,20 @@ then
             echo "$2 not found!"
         fi
 
+	else
+		helpMsg
+	fi
+	
+elif [ $# -eq 1 ];
+then
+	if [ $1 = "--klipper-fw-flash" ]
+        then
+	    sudo service klipper stop
+            eraseFW
+            sleep 1
+            sudo -i stty -F /dev/ttyAMA0 ispeed 115200 ospeed 115200
+            $BOSSA_CLI -e -w -v -b -R -i -p ttyAMA0 /klipper/out/klipper.bin
+	    sudo service klipper start
 	else
 		helpMsg
 	fi
